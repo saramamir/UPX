@@ -40,31 +40,22 @@ html,body{height:100%;margin:0;padding:18px;background:#fff7cc;font-family:Arial
 
 /* PRINT STYLES */
 @media print{
-    body{background:#fff; margin: 0; padding: 0;}
-    .btn,.controls, input, textarea, select, .global-controls {display:none !important;}
-    .container{box-shadow:none; max-width: 100%; margin: 0;}
-    .sheet{border:none; border-radius: 0; padding: 0;}
+    body{background:#fff;}
+    .btn,.controls, input, textarea, select {display:none !important;}
+    .container{box-shadow:none;}
+    .sheet{border:none; border-radius: 0;}
     .box input, .box textarea { border: none !important; padding: 0 !important; }
     .box label { font-size: 11px; margin-top: 2px !important; }
     .box { padding: 8px !important; }
     
-    /* Pages for all print */
-    .print-wrapper {
-        page-break-after: always;
-        overflow: hidden; 
-        box-sizing: border-box; 
-    }
-    
-    /* Single page isolation for single print */
-    .print-hide { display: none !important; }
-    
     .stc-sheet {
+        page-break-before: always;
         padding: 40px;
         font-size: 10pt;
         line-height: 1.5;
         border: none;
     }
-    .stc-sheet h2, .stc-awb-copy h2 {
+    .stc-sheet h2 {
         color: var(--dhl-red);
         border-bottom: 2px solid var(--dhl-yellow);
         padding-bottom: 5px;
@@ -75,133 +66,142 @@ html,body{height:100%;margin:0;padding:18px;background:#fff7cc;font-family:Arial
 </style>
 </head>
 <body>
-<div class="container print-wrapper" id="printWrapper1">
-    <div class="sheet" id="sheetPrint1">
-        <div id="invoiceRoot">
+<div class="container">
+    <div class="sheet" id="sheetRoot">
 
-            <div class="header">
-                <div style="display:flex;gap:12px;align-items:center;">
-                    <img src="UPX_Logo.png" alt="UPX Logo" style="width: 100px; height: auto;">
-                    <div class="company-info">
-                        <div class="Medium">Email: amirr.shafi@gmail.com</div>
-                        <div class="Medium">Phone: 03027573720 | Phone: 03224305598</div>
-                    </div>
-                </div>
-                <div class="inv-title" style="min-width: 200px;">
-                    <div>INVOICE</div>
-                    
-                    <canvas id="invoiceBarcodeCanvas" width="200" height="40" style="margin-top: 5px;"></canvas>
-
-                    <div style="font-weight:700;font-size:16px;margin-top:6px;">Invoice/AWB #: 
-                        <input id="invoiceNo" value="771-10668769" style="padding:4px; border:1px solid #ddd; width: 150px; text-align: right; font-weight: 700;" oninput="updateAllTrackingData(this.value)">
-                    </div>
+        <div class="header">
+            <div style="display:flex;gap:12px;align-items:center;">
+                <img src="UPX_Logo.png" alt="UPX Logo" style="width: 100px; height: auto;">
+                <div class="company-info">
+                    <div class="Medium">Email: amirr.shafi@gmail.com</div>
+                    <div class="Medium">Phone: 03027573720 | Phone: 03224305598</div>
                 </div>
             </div>
+            <div class="inv-title" style="min-width: 200px;">
+                <div>INVOICE</div>
+                
+                <canvas id="invoiceBarcodeCanvas" width="200" height="40" style="margin-top: 5px;"></canvas>
 
-            <div class="top-row">
-                <div class="box">
-                    <h3>SHIPPER</h3>
-                    <label class="small">Name</label>
-                    <input id="shipperName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Shipper name" value="Amir Shafi">
-                    <label class="small" style="margin-top:6px">Company</label>
-                    <input id="shipperCompany" style="width:100%;padding:6px;border:1px solid #ddd">
-                    <label class="small" style="margin-top:6px">Address</label>
-                    <textarea id="shipperAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd">Shipper Address, Lahore, Pakistan</textarea>
-                    <label class="small" style="margin-top:6px">Phone / Email</label>
-                    <input id="shipperContact" style="width:100%;padding:6px;border:1px solid #ddd">
+                <div style="font-weight:700;font-size:16px;margin-top:6px;">Invoice/AWB #: 
+                    <input id="invoiceNo" value="771-10668769" style="padding:4px; border:1px solid #ddd; width: 150px; text-align: right; font-weight: 700;" oninput="updateAllTrackingData(this.value)">
                 </div>
-
-                <div class="box">
-                    <h3>RECEIVER</h3>
-                    <label class="small">Name</label>
-                    <input id="recvName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Receiver name">
-                    <label class="small" style="margin-top:6px">Company</label>
-                    <input id="recvCompany" style="width:100%;padding:6px;border:1px solid #ddd">
-                    <label class="small" style="margin-top:6px">Address</label>
-                    <textarea id="recvAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd"></textarea>
-                    <label class="small" style="margin-top:6px">Phone / Email</label>
-                    <input id="recvContact" style="width:100%;padding:6px;border:1px solid #ddd">
-                </div>
-            </div>
-
-            <div class="section-title">ITEMS / CONTENTS</div>
-
-            <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
-                <input id="itemDesc" placeholder="Description (e.g., iPhone 15)" style="flex:2;padding:8px;border:1px solid #ddd">
-                <input id="itemQty" placeholder="Qty" type="number" min="1" value="1" style="width:80px;padding:8px;border:1px solid #ddd">
-                <input id="itemUnit" placeholder="Unit Price" type="number" min="0" value="0" style="width:120px;padding:8px;border:1px solid #ddd">
-                <select id="itemCurrency" style="width:120px;padding:8px;border:1px solid #ddd" onchange="recalcTotals()">
-                    <option value="PKR">PKR</option>
-                    <option value="USD" selected>USD</option>
-                    <option value="EUR">EUR</option>
-                </select>
-                <button class="btn" id="addItemBtn">Add Item</button>
-            </div>
-
-            <table class="items-table" id="itemsTable">
-                <thead>
-                    <tr>
-                        <th style="width:46%">Description</th>
-                        <th style="width:8%">Qty</th>
-                        <th style="width:14%">Unit Price</th>
-                        <th style="width:12%">Currency</th>
-                        <th style="width:14%">Total</th>
-                        <th style="width:6%"></th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-            <div class="total-bar">
-                <div>Total Declared Value (For Customs)</div>
-                <div><span id="totalCurrency">USD</span> <span id="grandTotal">0.00</span></div>
-            </div>
-            
-            <div class="section-title" style="margin-top:18px">SHIPMENT DETAILS</div>
-            <table class="items-table details-table" style="margin-top:10px;">
-                <tbody>
-                    <tr>
-                        <td style="width:22%"><b>Booking Date</b></td>
-                        <td style="width:28%"><input id="bookingDate" type="date" style="width:100%;padding:6px;border:1px solid #ddd"></td>
-                        <td style="width:20%"><b>Dimensions</b></td>
-                        <td style="width:30%"><input id="dims" placeholder="L×W×H (e.g., 30x20x15)" style="width:100%;padding:6px;border:1px solid #ddd"></td>
-                    </tr>
-                    <tr>
-                        <td><b>Actual Weight</b></td>
-                        <td><input id="itemWeight" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
-                        <td><b>Chargeable Weight</b></td>
-                        <td><input id="chargeable" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
-                    </tr>
-                    <tr>
-                        <td><b>Pieces</b></td>
-                        <td><input id="pieces" placeholder="1" type="number" min="1" value="1" style="width:100%;padding:6px;border:1px solid #ddd"></td>
-                        <td><b>Type</b></td>
-                        <td>
-                            <select id="shipType" style="width:100%;padding:6px;border:1px solid #ddd">
-                                <option>DOCUMENT</option><option selected>NON-DOCUMENT</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold; color: var(--dhl-red);">SHIPMENT FREIGHT (PKR):</td>
-                        <td colspan="3"><input id="shipmentFreight" type="number" value="40000" style="width:100%;padding:6px;border:1px solid #ddd; font-weight: bold; color: var(--dhl-red);" oninput="updatePreviewData()"></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="controls">
-                <button class="btn" id="genBarcodeBtn">Update Barcode</button>
-                <button class="btn" onclick="exportPDF('page1')">💾 Save Invoice Copy</button>
-                <button class="btn ghost" onclick="printPage('sheetPrint1')">🖨️ Print Invoice</button>
             </div>
         </div>
-    </div> 
-</div>
 
-<div class="container print-wrapper" id="printWrapper2">
-    <div class="sheet" id="sheetPrint2">
-        <div id="awbConsigneeCopy" style="padding: 14px;">
+        <div class="top-row">
+            <div class="box">
+                <h3>SHIPPER</h3>
+                <label class="small">Name</label>
+                <input id="shipperName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Shipper name" value="Amir Shafi">
+                <label class="small" style="margin-top:6px">Company</label>
+                <input id="shipperCompany" style="width:100%;padding:6px;border:1px solid #ddd">
+                <label class="small" style="margin-top:6px">Address</label>
+                <textarea id="shipperAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd">Shipper Address, Lahore, Pakistan</textarea>
+                <label class="small" style="margin-top:6px">Phone / Email</label>
+                <input id="shipperContact" style="width:100%;padding:6px;border:1px solid #ddd" value="03027573720 / amirr.shafi@gmail.com">
+            </div>
 
+            <div class="box">
+                <h3>RECEIVER</h3>
+                <label class="small">Name</label>
+                <input id="recvName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Receiver name">
+                <label class="small" style="margin-top:6px">Company</label>
+                <input id="recvCompany" style="width:100%;padding:6px;border:1px solid #ddd">
+                <label class="small" style="margin-top:6px">Address</label>
+                <textarea id="recvAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd"></textarea>
+                <label class="small" style="margin-top:6px">Phone / Email</label>
+                <input id="recvContact" style="width:100%;padding:6px;border:1px solid #ddd">
+            </div>
+        </div>
+
+        <div class="section-title">ITEMS / CONTENTS</div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+            <input id="itemDesc" placeholder="Description (e.g., iPhone 15)" style="flex:2;padding:8px;border:1px solid #ddd">
+            <input id="itemQty" placeholder="Qty" type="number" min="1" value="1" style="width:80px;padding:8px;border:1px solid #ddd">
+            <input id="itemUnit" placeholder="Unit Price" type="number" min="0" value="0" style="width:120px;padding:8px;border:1px solid #ddd">
+            <select id="itemCurrency" style="width:120px;padding:8px;border:1px solid #ddd" onchange="recalcTotals()">
+                <option value="PKR">PKR</option>
+                <option value="USD" selected>USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+            <button class="btn" id="addItemBtn">Add Item</button>
+        </div>
+
+        <table class="items-table" id="itemsTable">
+            <thead>
+                <tr>
+                    <th style="width:46%">Description</th>
+                    <th style="width:8%">Qty</th>
+                    <th style="width:14%">Unit Price</th>
+                    <th style="width:12%">Currency</th>
+                    <th style="width:14%">Total</th>
+                    <th style="width:6%"></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="total-bar">
+            <div>Total Declared Value (For Customs)</div>
+            <div><span id="totalCurrency">USD</span> <span id="grandTotal">0.00</span></div>
+        </div>
+
+        <div class="section-title" style="margin-top:18px">SHIPMENT DETAILS</div>
+        <table class="items-table details-table" style="margin-top:10px;">
+            <tbody>
+                <tr>
+                    <td style="width:22%"><b>Booking Date</b></td>
+                    <td style="width:28%"><input id="bookingDate" type="date" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td style="width:20%"><b>Dimensions</b></td>
+                    <td style="width:30%"><input id="dims" placeholder="L×W×H (e.g., 30x20x15)" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                </tr>
+                <tr>
+                    <td><b>Actual Weight</b></td>
+                    <td><input id="itemWeight" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td><b>Chargeable Weight</b></td>
+                    <td><input id="chargeable" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                </tr>
+                <tr>
+                    <td><b>Pieces</b></td>
+                    <td><input id="pieces" placeholder="1" type="number" min="1" value="1" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td><b>Type</b></td>
+                    <td>
+                        <select id="shipType" style="width:100%;padding:6px;border:1px solid #ddd">
+                            <option>DOCUMENT</option><option selected>NON-DOCUMENT</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="controls">
+            <button class="btn" id="genBarcodeBtn">Update Barcode</button>
+            <button class="btn" id="exportPdfBtn">Export PDF</button>
+            <button class="btn ghost" id="printBtn">Print</button>
+        </div>
+
+        <div class="preview">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+                <div>
+                    <div style="font-weight:800;" id="previewAwb">AWB: 2119902</div>
+                    <div class="small" id="previewDate">Date</div>
+                    <canvas id="barcodePreview" width="360" height="60" style="margin-top:8px;border:1px solid #eee;"></canvas>
+                    <div id="barcodeText" class="small" style="margin-top:6px;"></div>
+                </div>
+                <div style="text-align:right;">
+                    <div id="qrcode" style="display:inline-block"></div>
+                    <div class="small" style="margin-top:8px">Scan for tracking</div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <strong>Shipper: </strong><span id="pShipper" class="small"></span>
+                <strong style="margin-top:8px;display:block">Receiver: </strong><span id="pConsignee" class="small"></span>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;border-top:6px solid var(--dhl-yellow);padding-top:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="display:flex;gap:12px;align-items:center;">
                     <img src="UPX_Logo.png" alt="UPX Logo" style="width: 100px; height: auto;">
@@ -211,7 +211,7 @@ html,body{height:100%;margin:0;padding:18px;background:#fff7cc;font-family:Arial
                 </div>
             </div>
                 <div style="border:3px solid var(--dhl-yellow);padding:8px;border-radius:4px;background:#fffbea;text-align:right;min-width:210px;">
-                    <div style="font-weight:800;color:var(--dhl-red)">AIRWAY BILL &middot; <span style="color:#000;">RECEIVER COPY</span></div>
+                    <div style="font-weight:800;color:var(--dhl-red)">AIRWAY BILL</div>
                     <div style="font-size:12px;margin-top:6px">DESTINATION: <span id="awbDest">GB</span></div>
                     <div style="font-size:12px">SERVICE: <span id="awbService">STANDARD</span></div>
                     <div style="font-weight:700;margin-top:6px">Tracking #: <span id="awbTrack">771-10668769</span></div>
@@ -260,146 +260,34 @@ html,body{height:100%;margin:0;padding:18px;background:#fff7cc;font-family:Arial
                     <div id="awbBarcodeArea"><canvas id="barcodeCanvas2" width="360" height="60"></canvas></div>
                     <div id="awbQr" style="margin-top:6px"></div>
                 </div>
-              </div>
-
-            <div class="controls" style="margin-top: 10px;">
-                <button class="btn" onclick="exportPDF('page2')">💾 Save Receiver Copy</button>
-                <button class="btn ghost" onclick="printPage('sheetPrint2')">🖨️ Print Receiver Copy</button>
             </div>
         </div>
-    </div> 
-</div>
+    </div> </div>
 
-<div class="container print-wrapper" id="printWrapper3">
-    <div class="stc-awb-copy" id="sheetPrint3">
-        <div id="awbCarrierCopy" style="padding: 20px; border-color: var(--dhl-red);">
-            
-            <div style="text-align: right; font-size: 24px; font-weight: 900; color: var(--dhl-red); margin-bottom: 10px;">
-                AIRWAY BILL &middot; <span style="color:#000;">CARRIER COPY</span>
-            </div>
-            <hr style="border: 2px solid var(--dhl-yellow); margin-bottom: 15px;">
+<div class="container stc-sheet">
+    <h2 style="text-align: center;">STANDARD TRADING CONDITIONS</h2>
 
-            <div class="header" style="border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">
-                <div style="display:flex;gap:12px;align-items:center;">
-                    <img src="UPX_Logo.png" alt="UPX Logo" style="width: 80px; height: auto;">
-                    <div class="company-info" style="font-size: 12px;">
-                        <div>Email: amirr.shafi@gmail.com</div>
-                        <div>Phone: 03027573720 | Phone: 03224305598</div>
-                    </div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-size:12px">DESTINATION: <span id="awbDest_3rd">GB</span></div>
-                    <div style="font-size:12px">SERVICE: <span id="awbService_3rd">STANDARD</span></div>
-                    <div style="font-weight:700;font-size:18px;margin-top:4px;">AWB #: <span id="awbTrack_3rd" style="color:var(--dhl-red)">771-10668769</span></div>
-                </div>
-            </div>
+    <div style="font-size: 10pt; line-height: 1.5; margin-bottom: 20px;">
+        <p style="font-weight: bold; margin: 0;">DECLARATION: WE HEREBY DECLARE THAT THE ABOVE PARTICULARS ARE TRUE AND CORRECT.</p>
+        <p style="margin: 0 0 10px 0;">THESE GOODS ARE SENT AS A GIFT. NO COMMERCIAL VALUE. FOR CUSTOMS PURPOSES ONLY.</p>
+        
+        <p style="margin: 0 0 10px 0;">Email: amirr.shafi@gmail.com | Phone: 03027573720 | Phone: 03224305598</p>
+        
+        <p style="margin: 0 0 5px 0;">By tendering goods for transport by URGENT PARCEL XPRESS, the Consignor agrees to the following conditions:</p>
 
-            <div class="top-row">
-                <div class="box" style="flex:1; background:#fff;">
-                    <h3 style="background: var(--dhl-red); color: #fff;">SHIPPER</h3>
-                    <div id="awbShipper_3rd" class="small" style="margin-top:12px; font-size: 13px;"></div>
-                    <div style="font-size: 11px; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 5px;">
-                        <span style="font-weight: bold;">BOOKING OFFICE:</span> URGENT Parcel Xpress Office
-                    </div>
-                </div>
-
-                <div class="box" style="flex:1; background:#fff;">
-                    <h3 style="background: var(--dhl-red); color: #fff;">RECEIVER</h3>
-                    <div id="awbReceiver_3rd" class="small" style="margin-top:12px; font-size: 13px;"></div>
-                    <div style="font-size: 11px; margin-top: 10px; border-top: 1px dashed #ddd; padding-top: 5px;">
-                        <span style="font-weight: bold;">REQUIRED DELIVERY DATE:</span> ________ / ________ / ________
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-title" style="margin-top:18px; background:var(--dhl-yellow); color:#000;">ITEMS / CONTENTS &amp; FINANCIALS</div>
-            <table class="items-table" style="margin-top:8px;">
-                <tbody>
-                    <tr>
-                        <td style="width: 50%; border-right: 1px solid #ddd;"><b>Description of Goods</b></td>
-                        <td style="width: 50%;"><b>Total Declared Value</b></td>
-                    </tr>
-                    <tr>
-                        <td><span id="awbItemsDesc_3rd" class="small"></span></td>
-                        <td style="font-weight: 800; font-size: 15px;"><span id="totalCurrency_3rd">USD</span> <span id="grandTotal_3rd">0.00</span></td>
-                    </tr>
-                    <tr>
-                        <td><b>SHIPMENT FREIGHT:</b></td>
-                        <td style="font-weight: 800; color: var(--dhl-red);">PKR <span id="freightDisplay3">40000.00</span> <span class="small" style="color:#666;">(Payment to be collected from consignee)</span></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="section-title" style="margin-top:18px; background:var(--dhl-red); color:#fff;">SHIPMENT DETAILS (PHYSICAL)</div>
-            <table class="items-table details-table" style="margin-top:8px;">
-                <tbody>
-                    <tr><td style="width:25%"><b>Booking Date:</b></td><td style="width:25%" id="awbBooking_3rd"></td>
-                    <td style="width:15%"><b>Dimensions</b></td><td style="width:35%" id="awbDims_3rd"></td></tr>
-
-                    <tr><td><b>DIM WEIGHT</b></td><td id="awbDimWeight_3rd"></td>
-                    <td><b>CHARGEABLE</b></td><td id="awbChargeable_3rd"></td></tr>
-
-                    <tr><td><b>PIECES</b></td><td id="awbPieces_3rd"></td>
-                    <td><b>WEIGHT</b></td><td id="awbWeight_3rd"></td></tr>
-
-                    <tr><td><b>TYPE</b></td><td id="awbType_3rd"></td>
-                    <td><b>AIRWAY BILL No.</b></td><td id="awbNoLarge_3rd" style="font-weight:800; color: var(--dhl-red);">771-10668769</td></tr>
-                </tbody>
-            </table>
-
-            <div style="margin-top:20px;">
-                <div style="font-size:11px; color:#333; border:1px solid #ccc; padding: 10px; background: #f9f9f9; line-height: 1.4;">
-                    <p style="font-weight: bold; margin-bottom: 5px; margin-top: 0;">CONSIGNOR DECLARATION &amp; CARRIER LIABILITY:</p>
-                    <p style="margin: 0;">WE HEREBY DECLARE AND UNDERTAKE THAT THE ABOVE MENTIONED PARTICULARS ARE TRUE AND CORRECT. THERE IS NOTHING DANGEROUS OR PROHIBITED. MAXIMUM LIABILITY USD 100 UNLESS ADDITIONAL INSURANCE PURCHASED. CONSIGNEE PAYS ALL DESTINATION DUTIES/TAXES.</p>
-                </div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; margin-top: 25px;">
-                <div style="width: 45%; border-top: 1px solid #000; padding-top: 5px; text-align: center; font-weight: bold; font-size: 12px;">SHIPPER SIGNATURE / STAMP</div>
-                <div style="width: 45%; border-top: 1px solid #000; padding-top: 5px; text-align: center; font-weight: bold; font-size: 12px;">CARRIER AUTHORISED SIGNATURE / DATE</div>
-            </div>
-            
-        </div> 
-        <div class="controls" style="margin-top: 10px;">
-            <button class="btn" onclick="exportPDF('page3')">💾 Save Carrier Copy</button>
-            <button class="btn ghost" onclick="printPage('sheetPrint3')">🖨️ Print Carrier Copy</button>
-        </div>
+        <ol style="margin: 0; padding-left: 20px;">
+            <li>DEFINITIONS: "URGENT PARCEL XPRESS" means Urgent Parcel Xpress Worldwide Express. "Consignor" or "Shipper" means the sender. "Consignee" means the person to whom the goods are consigned.</li>
+            <li>CONSIGNMENT NOTE: Each consignment shall be correctly addressed and accompanied by URGENT PARCEL XPRESS form of Consignment Note which the Consignor shall properly complete. The Consignor is responsible for correctness of information.</li>
+            <li>SUB-CONTRACTING: URGENT PARCEL XPRESS may sub-contract all or any part and may engage agents or sub-contractors.</li>
+            <li>COMMON CARRIER: The company is not a common carrier and will only carry goods on these conditions.</li>
+            <li>LIABILITY: URGENT PARCEL XPRESS shall not be liable for any loss, damage, or delays except where directly caused by proven negligence. Maximum liability is limited to USD 100 per shipment unless additional insurance is purchased.</li>
+            <li>PROHIBITED ITEMS: Consignor warrants goods do not contain dangerous, hazardous, or prohibited items including narcotics, weapons, explosives, antiques, liquids, or items prohibited by IATA or local laws. Consignor fully responsible.</li>
+            <li>CUSTOMS & DUTIES: Any customs duties, taxes, or charges levied at destination shall be paid by Consignee. If Consignee refuses payment, Consignor shall be liable.</li>
+            <li>GOVERNING LAW: These conditions governed by laws of Pakistan. Disputes subject to exclusive jurisdiction of Pakistani courts.</li>
+        </ol>
     </div>
 </div>
-<div class="container print-wrapper" id="printWrapper4">
-    <div class="stc-sheet" id="sheetPrint4">
-        <h2 style="text-align: center;">STANDARD TRADING CONDITIONS</h2>
 
-        <div style="font-size: 10pt; line-height: 1.5; margin-bottom: 20px;">
-            <p style="font-weight: bold; margin: 0;">DECLARATION: WE HEREBY DECLARE THAT THE ABOVE PARTICULARS ARE TRUE AND CORRECT.</p>
-            <p style="margin: 0 0 10px 0;">THESE GOODS ARE SENT AS A GIFT. NO COMMERCIAL VALUE. FOR CUSTOMS PURPOSES ONLY.</p>
-            
-            <p style="margin: 0 0 10px 0;">Email: amirr.shafi@gmail.com | Phone: 03027573720 | Phone: 03224305598</p>
-            
-            <p style="margin: 0 0 5px 0;">By tendering goods for transport by URGENT PARCEL XPRESS, the Consignor agrees to the following conditions:</p>
-
-            <ol style="margin: 0; padding-left: 20px;">
-                <li>DEFINITIONS: "URGENT PARCEL XPRESS" means Urgent Parcel Xpress Worldwide Express. "Consignor" or "Shipper" means the sender. "Consignee" means the person to whom the goods are consigned.</li>
-                <li>CONSIGNMENT NOTE: Each consignment shall be correctly addressed and accompanied by URGENT PARCEL XPRESS form of Consignment Note which the Consignor shall properly complete. The Consignor is responsible for correctness of information.</li>
-                <li>SUB-CONTRACTING: URGENT PARCEL XPRESS may sub-contract all or any part and may engage agents or sub-contractors.</li>
-                <li>COMMON CARRIER: The company is not a common carrier and will only carry goods on these conditions.</li>
-                <li>LIABILITY: URGENT PARCEL XPRESS shall not be liable for any loss, damage, or delays except where directly caused by proven negligence. Maximum liability is limited to USD 100 per shipment unless additional insurance is purchased.</li>
-                <li>PROHIBITED ITEMS: Consignor warrants goods do not contain dangerous, hazardous, or prohibited items including narcotics, weapons, explosives, antiques, liquids, or items prohibited by IATA or local laws. Consignor fully responsible.</li>
-                <li>CUSTOMS & DUTIES: Any customs duties, taxes, or charges levied at destination shall be paid by Consignee. If Consignee refuses payment, Consignor shall be liable.</li>
-                <li>GOVERNING LAW: These conditions governed by laws of Pakistan. Disputes subject to exclusive jurisdiction of Pakistani courts.</li>
-            </ol>
-        </div>
-        <div class="controls" style="margin-top: 10px;">
-            <button class="btn" onclick="exportPDF('page4')">💾 Save STC Page</button>
-            <button class="btn ghost" onclick="printPage('sheetPrint4')">🖨️ Print STC Page</button>
-        </div>
-    </div>
-</div>
-<div class="container global-controls" style="margin-top: 20px; text-align: center; border: 2px solid var(--dhl-red); padding: 15px; border-radius: 6px; background: #fffbea;">
-    <h3 style="color: var(--dhl-red); margin-top: 0;">Universal Actions</h3>
-    <button class="btn" onclick="exportPDF('all')" style="font-size: 16px;">💾 Save ALL Pages (PDF)</button>
-    <button class="btn ghost" onclick="printPage('all')" style="font-size: 16px; margin-left: 10px;">🖨️ Print ALL Pages</button>
-</div>
 <script>
 /* --- Configuration (Not Used for Value, Only for Symbols) --- */
 const CURRENCIES = ['PKR', 'USD', 'EUR']; 
@@ -410,8 +298,9 @@ const fmt = v => (Number(v)||0).toFixed(2);
 const escapeHtml = s => (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const randomAwb = () => { const prefix = String(Math.floor(Math.random()*900)+100); const suffix = String(Math.floor(Math.random()*90000000)+10000000); return prefix + "-" + suffix; }
 
-/* --- Tracking Data Updater (No change) --- */
+/* --- Tracking Data Updater --- */
 function updateAllTrackingData(newAwb) {
+    
     // 1. Update Invoice Number field
     if ($('invoiceNo')) {
         $('invoiceNo').value = newAwb;
@@ -420,26 +309,25 @@ function updateAllTrackingData(newAwb) {
     // 2. Update all AWB displays
     const trackingDisplay = newAwb || 'N/A';
     
-    // Update displays for Page 2
+    // Update displays
     $('awbTrack').textContent = trackingDisplay;
     $('awbNoLarge').textContent = trackingDisplay;
     
-    // Update AWB displays on Page 3
-    $('awbTrack_3rd').textContent = trackingDisplay;
-    $('awbNoLarge_3rd').textContent = trackingDisplay;
-    
     // Update barcodes/QR codes
     drawCode128OnCanvas(newAwb, 'invoiceBarcodeCanvas'); // Invoice barcode
-    drawCode128OnCanvas(newAwb, 'barcodeCanvas2'); // AWB Copy barcode
-    drawQRTo('awbQr', newAwb); // AWB Copy QR
+    drawCode128OnCanvas(newAwb, 'barcodePreview');
+    drawCode128OnCanvas(newAwb, 'barcodeCanvas2');
+    drawQRTo('qrcode', newAwb);
+    drawQRTo('awbQr', newAwb);
 
-    updatePreviewData(); // Sync other data fields dependent on tracking update
+    // Update AWB preview display
+    $('previewAwb').textContent = 'AWB: ' + trackingDisplay;
 }
 
-/* --- Invoice Item Management (No change) --- */
+/* --- Invoice Item Management --- */
 function addItem(desc, qty, unit, cur){
-    const tbody = document.querySelector('#itemsTable tbody');
-    const tr = document.createElement('tr');
+	const tbody = document.querySelector('#itemsTable tbody');
+	const tr = document.createElement('tr');
     
     // Store original unit and currency data (no conversion logic)
     tr.dataset.qty = qty;
@@ -447,22 +335,22 @@ function addItem(desc, qty, unit, cur){
     tr.dataset.cur = cur;
     const total = (Number(qty)||0) * (Number(unit)||0);
 
-    tr.innerHTML = `<td>${escapeHtml(desc)}</td>
-        <td style="text-align:center">${escapeHtml(qty)}</td>
-        <td style="text-align:right">${fmt(unit)}</td>
-        <td style="text-align:center" class="item-currency-display">${escapeHtml(cur)}</td>
-        <td style="text-align:right" class="item-total-display">${fmt(total)}</td>
-        <td style="text-align:center"><button class="btn ghost" onclick="removeRow(this)">Del</button></td>`;
-    tbody.appendChild(tr);
-    recalcTotals();
+	tr.innerHTML = `<td>${escapeHtml(desc)}</td>
+		<td style="text-align:center">${escapeHtml(qty)}</td>
+		<td style="text-align:right">${fmt(unit)}</td>
+		<td style="text-align:center" class="item-currency-display">${escapeHtml(cur)}</td>
+		<td style="text-align:right" class="item-total-display">${fmt(total)}</td>
+		<td style="text-align:center"><button class="btn ghost" onclick="removeRow(this)">Del</button></td>`;
+	tbody.appendChild(tr);
+	recalcTotals();
 }
 
 function removeRow(btn){ btn.closest('tr').remove(); recalcTotals(); }
 
 // This function only recalculates total based on stored values and updates the displayed currency symbol.
 function recalcTotals(){
-    const rows = document.querySelectorAll('#itemsTable tbody tr');
-    let grandTotal = 0; 
+	const rows = document.querySelectorAll('#itemsTable tbody tr');
+	let grandTotal = 0; 
     let displayCurrency = $('itemCurrency').value || 'USD';
     
     // Update currency display on all rows
@@ -471,34 +359,28 @@ function recalcTotals(){
         const unit = Number(r.dataset.unit) || 0;
         const total = qty * unit;
         
-        grandTotal += total; 
+        grandTotal += total; // Total calculation remains based on the stored numbers
         
-        r.querySelector('.item-total-display').textContent = fmt(total); 
-        r.querySelector('.item-currency-display').textContent = displayCurrency; 
-    });
+        r.querySelector('.item-total-display').textContent = fmt(total); // Update total value displayed
+        r.querySelector('.item-currency-display').textContent = displayCurrency; // Update symbol only
+	});
     
-    $('grandTotal').textContent = fmt(grandTotal);
-    $('totalCurrency').textContent = displayCurrency;
-    
-    // Sync totals to Page 3
-    $('grandTotal_3rd').textContent = fmt(grandTotal);
-    $('totalCurrency_3rd').textContent = displayCurrency;
-    
-    updatePreviewData();
+	$('grandTotal').textContent = fmt(grandTotal);
+	$('totalCurrency').textContent = displayCurrency;
 }
 
 $('addItemBtn').addEventListener('click', ()=>{
-    const d = $('itemDesc').value.trim();
-    const q = $('itemQty').value || 1;
-    const u = $('itemUnit').value || 0;
-    const c = $('itemCurrency').value || 'USD';
-    if(!d || Number(u) <= 0){ alert('Enter item description and valid Unit Price.'); return; }
-    addItem(d,q,u,c);
-    $('itemDesc').value=''; $('itemQty').value='1'; $('itemUnit').value='0';
+	const d = $('itemDesc').value.trim();
+	const q = $('itemQty').value || 1;
+	const u = $('itemUnit').value || 0;
+	const c = $('itemCurrency').value || 'USD';
+	if(!d || Number(u) <= 0){ alert('Enter item description and valid Unit Price.'); return; }
+	addItem(d,q,u,c);
+	$('itemDesc').value=''; $('itemQty').value='1'; $('itemUnit').value='0';
 });
 
 
-/* --- Barcode Drawing Logic (Code 128) (No change) --- */
+/* --- Barcode Drawing Logic (Code 128) --- */
 
 const CODE128_PATTERNS = [
     "212222", "222122", "222221", "121223", "123122", "131222", "122213", "122312", "132212", "221213",
@@ -559,10 +441,10 @@ function generateCode128PatternString(data) {
 }
 
 function drawCode128OnCanvas(text, canvasId){
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(!text) return;
+	const canvas = document.getElementById(canvasId);
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+	if(!text) return;
     
     const patternString = generateCode128PatternString(text.replace(/-/g, ''));
     if (!patternString) return;
@@ -590,177 +472,130 @@ function drawCode128OnCanvas(text, canvasId){
     }
 }
 
+function drawInvoiceBarcode(invoiceNo) {
+    if (invoiceNo) {
+        drawCode128OnCanvas(invoiceNo, 'invoiceBarcodeCanvas');
+    }
+}
+/* QR with QRious */
 function drawQRTo(elId, value){
-    const el = document.getElementById(elId);
-    el.innerHTML = '';
-    if(!value) return;
-    const qr = new QRious({ value: value, size: 120, level: 'M' });
-    const img = document.createElement('img'); img.src = qr.toDataURL(); img.alt='QR'; img.style.width='120px';
-    el.appendChild(img);
+	const el = document.getElementById(elId);
+	el.innerHTML = '';
+	if(!value) return;
+	const qr = new QRious({ value: value, size: 120, level: 'M' });
+	const img = document.createElement('img'); img.src = qr.toDataURL(); img.alt='QR'; img.style.width='120px';
+	el.appendChild(img);
 }
 
+/* Export PDF one-click */
+async function exportPDF(){
+	const root = document.getElementById('sheetRoot');
+	const stc = document.querySelector('.stc-sheet');
+	const { jsPDF } = window.jspdf;
+	const pdf = new jsPDF('p','pt','a4');
+	const opt = { scale: 2, useCORS: true };
+	const pageWidth = pdf.internal.pageSize.getWidth();
 
-/* --- Single and Multi-Page PDF Export --- */
-async function exportPDF(pageId){
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p','pt','a4');
-    const opt = { scale: 2, useCORS: true };
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const awbNo = $('invoiceNo').value;
-    let fileName = `UPX_Invoice_AWB_${awbNo}`;
-    let pages = [];
+	// 1. AWB/Invoice Page
+	let canvas = await html2canvas(root, opt);
+	let imgData = canvas.toDataURL('image/png');
+	let pageHeight = (canvas.height * pageWidth) / canvas.width;
+	pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
 
-    // Map the new page IDs to their elements
-    const pageMap = {
-        'page1': { element: document.getElementById('invoiceRoot'), name: 'Invoice_Copy' },
-        'page2': { element: document.getElementById('awbConsigneeCopy'), name: 'AWB_Receiver_Copy' },
-        'page3': { element: document.getElementById('awbCarrierCopy'), name: 'AWB_Carrier_Copy' },
-        'page4': { element: document.getElementById('sheetPrint4'), name: 'STC_Copy' }
-    };
-    
-    if (pageId === 'all') {
-        pages = [pageMap.page1, pageMap.page2, pageMap.page3, pageMap.page4];
-    } else if (pageMap[pageId]) {
-        pages.push(pageMap[pageId]);
-    }
+	// 2. STC Page
+	pdf.addPage();
+	canvas = await html2canvas(stc, opt);
+	imgData = canvas.toDataURL('image/png');
+	pageHeight = (canvas.height * pageWidth) / canvas.width;
+	pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
 
-    if (pages.length === 0) return;
-
-    if (pageId !== 'all') {
-        // Single page save
-        const page = pages[0];
-        fileName = `${fileName}_${page.name}`;
-        
-        const canvas = await html2canvas(page.element, opt);
-        const imgData = canvas.toDataURL('image/png');
-        const pageHeight = (canvas.height * pageWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
-
-    } else {
-        // Save All pages
-        for (let i = 0; i < pages.length; i++) {
-            const page = pages[i];
-            const canvas = await html2canvas(page.element, opt);
-            const imgData = canvas.toDataURL('image/png');
-            const pageHeight = (canvas.height * pageWidth) / canvas.width;
-            
-            if (i > 0) pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
-        }
-        fileName = `${fileName}_ALL`;
-    }
-
-    pdf.save(`${fileName}.pdf`);
+	pdf.save(`UPX_Invoice_AWB_${$('invoiceNo').value}.pdf`);
 }
 
-/* --- Single and Multi-Page Printing --- */
-function printPage(pageId) {
-    const allWrappers = document.querySelectorAll('.print-wrapper');
-    const printElementId = pageId.replace('sheet', 'printWrapper');
-
-    if (pageId === 'all') {
-        // Print all pages (relying on CSS page-break-after)
-        window.print();
-        
-    } else {
-        // Print single page by isolating it (for single copy printing)
-        
-        // 1. Hide all pages for print isolation
-        allWrappers.forEach(wrapper => {
-            if (wrapper.id !== printElementId) {
-                 wrapper.classList.add('print-hide');
-            }
-        });
-
-        // 2. Print
-        window.print();
-
-        // 3. Reset visibility after printing
-        allWrappers.forEach(wrapper => wrapper.classList.remove('print-hide'));
-    }
-}
-
-
-/* --- Update previews for shipper/receiver and AWB details (Synchronization) --- */
+/* Update previews for shipper/receiver and AWB details */
 function updatePreviewData(){
-    const sHTML = `${$('shipperName').value||''} ${$('shipperCompany').value?(' | ' + $('shipperCompany').value):''}\n${$('shipperAddress').value||''}\n${$('shipperContact').value||''}`;
-    const rHTML = `${$('recvName').value||''} ${$('recvCompany').value?(' | ' + $('recvCompany').value):''}\n${$('recvAddress').value||''}\n${$('recvContact').value||''}`;
-    
-    // Freight is now synchronized from the input field
-    const freightValue = fmt($('shipmentFreight').value);
-    
-    // Page 2: AWB Consignee/Receiver Copy
-    $('awbShipper').innerHTML = sHTML.replaceAll('\n','<br>');
-    $('awbReceiver').innerHTML = rHTML.replaceAll('\n','<br>');
-    $('freightDisplay2').textContent = freightValue;
+	const sHTML = `${$('shipperName').value||''} ${$('shipperCompany').value?(' | ' + $('shipperCompany').value):''}\n${$('shipperAddress').value||''}\n${$('shipperContact').value||''}`;
+	const rHTML = `${$('recvName').value||''} ${$('recvCompany').value?(' | ' + $('recvCompany').value):''}\n${$('recvAddress').value||''}\n${$('recvContact').value||''}`;
+	
+	$('pShipper').textContent = sHTML.replace(/\n/g, ' / ');
+	$('pConsignee').textContent = rHTML.replace(/\n/g, ' / ');
 
-    // Update Shipment details (Page 2)
-    $('awbBooking').textContent = $('bookingDate').value || new Date().toLocaleDateString();
-    $('awbDims').textContent = $('dims').value || '';
-    $('awbDimWeight').textContent = $('itemWeight').value || '';
-    $('awbChargeable').textContent = $('chargeable').value || '';
-    $('awbPieces').textContent = $('pieces').value || '';
-    $('awbWeight').textContent = $('itemWeight').value || '';
-    $('awbType').textContent = $('shipType').value || '';
-    
-    // AWB number placement (synced with Invoice No)
-    const awbnum = $('invoiceNo').value;
-    $('awbNoLarge').textContent = awbnum;
-    $('awbTrack').textContent = awbnum; 
-    
-    // Page 3: AWB Carrier Copy
-    $('awbShipper_3rd').innerHTML = sHTML.replaceAll('\n','<br>');
-    $('awbReceiver_3rd').innerHTML = rHTML.replaceAll('\n','<br>');
-    $('freightDisplay3').textContent = freightValue;
-    
-    // Sync Shipment details (Page 3)
-    $('awbBooking_3rd').textContent = $('bookingDate').value || new Date().toLocaleDateString();
-    $('awbDims_3rd').textContent = $('dims').value || '';
-    $('awbDimWeight_3rd').textContent = $('itemWeight').value || '';
-    $('awbChargeable_3rd').textContent = $('chargeable').value || '';
-    $('awbPieces_3rd').textContent = $('pieces').value || '';
-    $('awbWeight_3rd').textContent = $('itemWeight').value || '';
-    $('awbType_3rd').textContent = $('shipType').value || '';
+	$('awbShipper').innerHTML = sHTML.replaceAll('\n','<br>');
+	$('awbReceiver').innerHTML = rHTML.replaceAll('\n','<br>');
 
-    // Sync Tracking (Page 3)
-    $('awbTrack_3rd').textContent = awbnum;
-    $('awbNoLarge_3rd').textContent = awbnum;
-
-    // Sync Totals (Page 3)
-    $('totalCurrency_3rd').textContent = $('totalCurrency').textContent;
-    $('grandTotal_3rd').textContent = $('grandTotal').textContent;
+	// Update Shipment details
+	$('awbBooking').textContent = $('bookingDate').value || new Date().toLocaleDateString();
+	$('awbDims').textContent = $('dims').value || '';
+	$('awbDimWeight').textContent = $('itemWeight').value || '';
+	$('awbChargeable').textContent = $('chargeable').value || '';
+	$('awbPieces').textContent = $('pieces').value || '';
+	$('awbWeight').textContent = $('itemWeight').value || '';
+	$('awbType').textContent = $('shipType').value || '';
+	
+	// AWB number placement (synced with Invoice No)
+	const awbnum = $('invoiceNo').value;
     
-    // Sync Items Description (Page 3)
-    const itemRows = document.querySelectorAll('#itemsTable tbody tr');
-    let descList = [];
-    itemRows.forEach(r => {
-        const desc = r.cells[0].textContent;
-        const qty = r.cells[1].textContent;
-        descList.push(`${desc} (Qty: ${qty})`);
-    });
-    $('awbItemsDesc_3rd').textContent = descList.join('; ');
+	$('awbNoLarge').textContent = awbnum;
+	$('awbTrack').textContent = awbnum; 
+	
+	// Update barcodes
+	drawCode128OnCanvas(awbnum, 'barcodePreview');
+	drawCode128OnCanvas(awbnum, 'barcodeCanvas2');
+	drawQRTo('qrcode', awbnum);
+	drawQRTo('awbQr', awbnum);
+}
+
+/* --- Tracking Data Updater --- */
+function updateAllTrackingData(newAwb) {
+    
+    // 1. Update Invoice Number field
+    if ($('invoiceNo')) {
+        $('invoiceNo').value = newAwb;
+    }
+
+    // 2. Update all AWB displays
+    const trackingDisplay = newAwb || 'N/A';
+    
+    // Update displays
+    $('awbTrack').textContent = trackingDisplay;
+    $('awbNoLarge').textContent = trackingDisplay;
+    
+    // Update barcodes/QR codes
+    drawCode128OnCanvas(newAwb, 'invoiceBarcodeCanvas'); // Invoice barcode
+    drawCode128OnCanvas(newAwb, 'barcodePreview');
+    drawCode128OnCanvas(newAwb, 'barcodeCanvas2');
+    drawQRTo('qrcode', newAwb);
+    drawQRTo('awbQr', newAwb);
+
+    // Update AWB preview display
+    $('previewAwb').textContent = 'AWB: ' + trackingDisplay;
+    
+    updatePreviewData(); // Sync other data fields dependent on tracking update
 }
 
 
-/* --- Wiring buttons and Initialization --- */
-
+/* Wiring buttons */
 document.getElementById('genBarcodeBtn').addEventListener('click', ()=> {
-    const awb = $('invoiceNo').value;
-    updateAllTrackingData(awb); 
+	const awb = $('invoiceNo').value;
+    updateAllTrackingData(awb); // Redraws all AWB/QR codes
 });
 
+document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+/* init on load */
 document.addEventListener('DOMContentLoaded', ()=>{
-    // set defaults
-    $('bookingDate').value = new Date().toISOString().slice(0,10);
+	// set defaults
+	$('bookingDate').value = new Date().toISOString().slice(0,10);
     
     // Initial sync of Invoice No to all AWB fields on load
     const initialAwb = $('invoiceNo').value;
     updateAllTrackingData(initialAwb);
 
-    // live update listeners
-    ['shipperName','shipperCompany','shipperAddress','shipperContact','recvName','recvCompany','recvAddress','recvContact','bookingDate','dims','itemWeight','chargeable','pieces','shipType', 'shipmentFreight'].forEach(id=>{
-        $(id).addEventListener('input', updatePreviewData);
-    });
+	// live update listeners
+	['shipperName','shipperCompany','shipperAddress','shipperContact','recvName','recvCompany','recvAddress','recvContact','bookingDate','dims','itemWeight','chargeable','pieces','shipType'].forEach(id=>{
+		$(id).addEventListener('input', updatePreviewData);
+	});
     // Key listener: Invoice No field updates everything
     $('invoiceNo').addEventListener('input', () => updateAllTrackingData($('invoiceNo').value));
 });
