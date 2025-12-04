@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>UPX — Invoice + Airway Bill (Final)</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root{--dhl-yellow:#ffcc00;--dhl-red:#cc0000;--muted:#666;}
+html,body{height:100%;margin:0;padding:18px;background:#fff7cc;font-family:Arial, Helvetica, sans-serif;color:#111;}
+.container{max-width:900px;margin:0 auto;}
+.sheet{background:#fff;border:4px solid var(--dhl-yellow);padding:14px;border-radius:6px;box-sizing:border-box;}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.logo-placeholder{font-size: 28px; font-weight: 900; color: var(--dhl-red); border: 3px solid var(--dhl-yellow); padding: 5px 12px; line-height: 1; border-radius: 4px;}
+.company-info{font-size:13px;color:#333;line-height:1.3;}
+.inv-title{color:var(--dhl-red);font-weight:800;font-size:20px;text-align:right;}
+.top-row{display:flex;gap:12px;margin-top:12px;}
+.box{flex:1;border:3px solid var(--dhl-yellow);background:#fffbea;padding:12px;border-radius:4px;position:relative;}
+.box h3{position:absolute;top:-14px;left:12px;background:var(--dhl-yellow);padding:4px 8px;margin:0;font-size:13px;font-weight:700;}
+.section-title{margin-top:18px;background:var(--dhl-red);color:#fff;padding:8px;font-weight:700;border-radius:4px;}
+.items-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+.items-table th,.items-table td{border:1px solid #ddd;padding:8px;text-align:left;}
+.items-table th{background:var(--dhl-yellow);font-weight:700;}
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn{background:var(--dhl-red);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:700;transition: background-color 0.2s;}
+.btn:hover {background-color: #a00;}
+.btn.ghost{background:#fff;color:#333;border:1px solid #ccc;padding:8px 10px;}
+.small{font-size:12px;color:var(--muted);}
+.total-bar{margin-top:10px;background:var(--dhl-red);color:#fff;padding:12px;border-radius:4px;display:flex;justify-content:space-between;font-weight:800;}
+.preview{margin-top:12px;border:1px dashed #eee;padding:8px;border-radius:6px;background:#fff;}
+#barcodePreview,#barcodeCanvas2{width:100%;max-width:360px;height:60px;border:1px solid #eee;background:#fff;}
+#invoiceBarcodeCanvas{width:100%;max-width:200px;height:40px;border:1px solid #eee;background:#fff;}
+#qrcode,#awbQr{width:120px;height:120px;border:1px solid #eee;padding:6px;background:#fff;display:inline-block;}
+.footer-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.3;}
+.awb-footer-box { border: 1px solid #ddd; padding: 10px; margin-top: 10px; }
+
+/* PRINT STYLES */
+@media print{
+    body{background:#fff;}
+    .btn,.controls, input, textarea, select {display:none !important;}
+    .container{box-shadow:none;}
+    .sheet{border:none; border-radius: 0;}
+    .box input, .box textarea { border: none !important; padding: 0 !important; }
+    .box label { font-size: 11px; margin-top: 2px !important; }
+    .box { padding: 8px !important; }
+    
+    .stc-sheet {
+        page-break-before: always;
+        padding: 40px;
+        font-size: 10pt;
+        line-height: 1.5;
+        border: none;
+    }
+    .stc-sheet h2 {
+        color: var(--dhl-red);
+        border-bottom: 2px solid var(--dhl-yellow);
+        padding-bottom: 5px;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="sheet" id="sheetRoot">
+
+        <div class="header">
+            <div style="display:flex;gap:12px;align-items:center;">
+                <div class="logo-placeholder">UPX</div>
+                <div class="company-info">
+                    <div style="font-weight:800; font-size: 14px; color: #111;">URGENT PARCEL XPRESS</div>
+                    <div class="small">Email: amirr.shafi@gmail.com</div>
+                    <div class="small">Phone: 03027573720 | Phone: 03224305598</div>
+                </div>
+            </div>
+            <div class="inv-title" style="min-width: 200px;">
+                <div>INVOICE</div>
+                
+                <canvas id="invoiceBarcodeCanvas" width="200" height="40" style="margin-top: 5px;"></canvas>
+
+                <div style="font-weight:700;font-size:16px;margin-top:6px;">Invoice/AWB #: 
+                    <input id="invoiceNo" value="771-10668769" style="padding:4px; border:1px solid #ddd; width: 150px; text-align: right; font-weight: 700;" oninput="updateAllTrackingData(this.value)">
+                </div>
+            </div>
+        </div>
+
+        <div class="top-row">
+            <div class="box">
+                <h3>SHIPPER</h3>
+                <label class="small">Name</label>
+                <input id="shipperName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Shipper name" value="Amir Shafi">
+                <label class="small" style="margin-top:6px">Company</label>
+                <input id="shipperCompany" style="width:100%;padding:6px;border:1px solid #ddd">
+                <label class="small" style="margin-top:6px">Address</label>
+                <textarea id="shipperAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd">Shipper Address, Lahore, Pakistan</textarea>
+                <label class="small" style="margin-top:6px">Phone / Email</label>
+                <input id="shipperContact" style="width:100%;padding:6px;border:1px solid #ddd" value="03027573720 / amirr.shafi@gmail.com">
+            </div>
+
+            <div class="box">
+                <h3>RECEIVER</h3>
+                <label class="small">Name</label>
+                <input id="recvName" style="width:100%;padding:6px;border:1px solid #ddd" placeholder="Receiver name">
+                <label class="small" style="margin-top:6px">Company</label>
+                <input id="recvCompany" style="width:100%;padding:6px;border:1px solid #ddd">
+                <label class="small" style="margin-top:6px">Address</label>
+                <textarea id="recvAddress" rows="2" style="width:100%;padding:6px;border:1px solid #ddd"></textarea>
+                <label class="small" style="margin-top:6px">Phone / Email</label>
+                <input id="recvContact" style="width:100%;padding:6px;border:1px solid #ddd">
+            </div>
+        </div>
+
+        <div class="section-title">ITEMS / CONTENTS</div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+            <input id="itemDesc" placeholder="Description (e.g., iPhone 15)" style="flex:2;padding:8px;border:1px solid #ddd">
+            <input id="itemQty" placeholder="Qty" type="number" min="1" value="1" style="width:80px;padding:8px;border:1px solid #ddd">
+            <input id="itemUnit" placeholder="Unit Price" type="number" min="0" value="0" style="width:120px;padding:8px;border:1px solid #ddd">
+            <select id="itemCurrency" style="width:120px;padding:8px;border:1px solid #ddd" onchange="recalcTotals()">
+                <option value="PKR">PKR</option>
+                <option value="USD" selected>USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+            <button class="btn" id="addItemBtn">Add Item</button>
+        </div>
+
+        <table class="items-table" id="itemsTable">
+            <thead>
+                <tr>
+                    <th style="width:46%">Description</th>
+                    <th style="width:8%">Qty</th>
+                    <th style="width:14%">Unit Price</th>
+                    <th style="width:12%">Currency</th>
+                    <th style="width:14%">Total</th>
+                    <th style="width:6%"></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="total-bar">
+            <div>Total Declared Value (For Customs)</div>
+            <div><span id="totalCurrency">USD</span> <span id="grandTotal">0.00</span></div>
+        </div>
+
+        <div class="section-title" style="margin-top:18px">SHIPMENT DETAILS</div>
+        <table class="items-table details-table" style="margin-top:10px;">
+            <tbody>
+                <tr>
+                    <td style="width:22%"><b>Booking Date</b></td>
+                    <td style="width:28%"><input id="bookingDate" type="date" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td style="width:20%"><b>Dimensions</b></td>
+                    <td style="width:30%"><input id="dims" placeholder="L×W×H (e.g., 30x20x15)" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                </tr>
+                <tr>
+                    <td><b>Actual Weight</b></td>
+                    <td><input id="itemWeight" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td><b>Chargeable Weight</b></td>
+                    <td><input id="chargeable" placeholder="0.00 KG" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                </tr>
+                <tr>
+                    <td><b>Pieces</b></td>
+                    <td><input id="pieces" placeholder="1" type="number" min="1" value="1" style="width:100%;padding:6px;border:1px solid #ddd"></td>
+                    <td><b>Type</b></td>
+                    <td>
+                        <select id="shipType" style="width:100%;padding:6px;border:1px solid #ddd">
+                            <option>DOCUMENT</option><option selected>NON-DOCUMENT</option>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="controls">
+            <button class="btn" id="genBarcodeBtn">Update Barcode</button>
+            <button class="btn" id="exportPdfBtn">Export PDF</button>
+            <button class="btn ghost" id="printBtn">Print</button>
+        </div>
+
+        <div class="preview">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+                <div>
+                    <div style="font-weight:800;" id="previewAwb">AWB: 771-10668769</div>
+                    <div class="small" id="previewDate">Date</div>
+                    <canvas id="barcodePreview" width="360" height="60" style="margin-top:8px;border:1px solid #eee;"></canvas>
+                    <div id="barcodeText" class="small" style="margin-top:6px;"></div>
+                </div>
+                <div style="text-align:right;">
+                    <div id="qrcode" style="display:inline-block"></div>
+                    <div class="small" style="margin-top:8px">Scan for tracking</div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px;">
+                <strong>Shipper: </strong><span id="pShipper" class="small"></span>
+                <strong style="margin-top:8px;display:block">Consignee: </strong><span id="pConsignee" class="small"></span>
+            </div>
+        </div>
+
+        <div style="margin-top:20px;border-top:6px solid var(--dhl-yellow);padding-top:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div class="logo-placeholder" style="font-size: 20px;">UPX</div>
+                </div>
+
+                <div style="border:3px solid var(--dhl-yellow);padding:8px;border-radius:4px;background:#fffbea;text-align:right;min-width:210px;">
+                    <div style="font-weight:800;color:var(--dhl-red)">AIRWAY BILL</div>
+                    <div style="font-size:12px;margin-top:6px">DESTINATION: <span id="awbDest">GB</span></div>
+                    <div style="font-size:12px">SERVICE: <span id="awbService">EXPRESS</span></div>
+                    <div style="font-weight:700;margin-top:6px">Tracking #: <span id="awbTrack">771-10668769</span></div>
+                </div>
+            </div>
+
+            <div class="top-row" style="margin-top:12px;">
+                <div class="box" style="flex:1;">
+                    <h3>SHIPPER</h3>
+                    <div id="awbShipper" class="small" style="margin-top:12px"></div>
+                </div>
+
+                <div class="box" style="flex:1;">
+                    <h3>RECEIVER</h3>
+                    <div id="awbReceiver" class="small" style="margin-top:12px"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px;background:var(--dhl-yellow);padding:8px;border-radius:4px;font-weight:700;color:#000">SHIPMENT DETAILS</div>
+
+            <table class="items-table details-table" style="margin-top:8px;">
+                <tbody>
+                    <tr><td style="width:25%"><b>Booking Date:</b></td><td style="width:25%" id="awbBooking"></td>
+                    <td style="width:15%"><b>Dimensions</b></td><td style="width:35%" id="awbDims"></td></tr>
+
+                    <tr><td><b>DIM WEIGHT</b></td><td id="awbDimWeight"></td>
+                    <td><b>CHARGEABLE</b></td><td id="awbChargeable"></td></tr>
+
+                    <tr><td><b>PIECES</b></td><td id="awbPieces"></td>
+                    <td><b>WEIGHT</b></td><td id="awbWeight"></td></tr>
+
+                    <tr><td><b>TYPE</b></td><td id="awbType"></td>
+                    <td><b>AWB#</b></td><td id="awbNoLarge" style="font-weight:800">771-10668769</td></tr>
+                </tbody>
+            </table>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+                <div class="small">
+                    <p style="font-weight: bold; margin-bottom: 5px;">DECLARATION:</p>
+                    <div class="awb-footer-box">
+                        <p style="margin:0;">I/WE HEREBY DECLARE THAT THE ABOVE PARTICULARS ARE TRUE AND CORRECT.</p>
+                        <p style="margin: 0; font-size: 9pt;">THESE GOODS ARE SENT AS A GIFT. NO COMMERCIAL VALUE. FOR CUSTOMS PURPOSES ONLY.</p>
+                    </div>
+                </div>
+                <div style="text-align:right">
+                    <div id="awbBarcodeArea"><canvas id="barcodeCanvas2" width="360" height="60"></canvas></div>
+                    <div id="awbQr" style="margin-top:6px"></div>
+                </div>
+            </div>
+        </div>
+    </div> </div>
+
+<div class="container stc-sheet">
+    <h2 style="text-align: center;">STANDARD TRADING CONDITIONS</h2>
+
+    <div style="font-size: 10pt; line-height: 1.5; margin-bottom: 20px;">
+        <p style="font-weight: bold; margin: 0;">DECLARATION: I/WE HEREBY DECLARE THAT THE ABOVE PARTICULARS ARE TRUE AND CORRECT.</p>
+        <p style="margin: 0 0 10px 0;">THESE GOODS ARE SENT AS A GIFT. NO COMMERCIAL VALUE. FOR CUSTOMS PURPOSES ONLY.</p>
+        
+        <p style="margin: 0 0 10px 0;">Email: amirr.shafi@gmail.com | Phone: 03027573720 | Phone: 03224305598</p>
+        
+        <p style="margin: 0 0 5px 0;">By tendering goods for transport by URGENT PARCEL XPRESS, the Consignor agrees to the following conditions:</p>
+
+        <ol style="margin: 0; padding-left: 20px;">
+            <li>DEFINITIONS: "URGENT PARCEL XPRESS" means Urgent Parcel Xpress Worldwide Express. "Consignor" or "Shipper" means the sender. "Consignee" means the person to whom the goods are consigned.</li>
+            <li>CONSIGNMENT NOTE: Each consignment shall be correctly addressed and accompanied by URGENT PARCEL XPRESS form of Consignment Note which the Consignor shall properly complete. The Consignor is responsible for correctness of information.</li>
+            <li>SUB-CONTRACTING: URGENT PARCEL XPRESS may sub-contract all or any part and may engage agents or sub-contractors.</li>
+            <li>COMMON CARRIER: The company is not a common carrier and will only carry goods on these conditions.</li>
+            <li>LIABILITY: URGENT PARCEL XPRESS shall not be liable for any loss, damage, or delays except where directly caused by proven negligence. Maximum liability is limited to USD 100 per shipment unless additional insurance is purchased.</li>
+            <li>PROHIBITED ITEMS: Consignor warrants goods do not contain dangerous, hazardous, or prohibited items including narcotics, weapons, explosives, antiques, liquids, or items prohibited by IATA or local laws. Consignor fully responsible.</li>
+            <li>CUSTOMS & DUTIES: Any customs duties, taxes, or charges levied at destination shall be paid by Consignee. If Consignee refuses payment, Consignor shall be liable.</li>
+            <li>GOVERNING LAW: These conditions governed by laws of Pakistan. Disputes subject to exclusive jurisdiction of Pakistani courts.</li>
+        </ol>
+    </div>
+</div>
+
+<script>
+/* --- Configuration (Not Used for Value, Only for Symbols) --- */
+const CURRENCIES = ['PKR', 'USD', 'EUR']; 
+
+/* --- Utilities --- */
+const $ = id => document.getElementById(id);
+const fmt = v => (Number(v)||0).toFixed(2);
+const escapeHtml = s => (s||'').toString().replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+const randomAwb = () => { const prefix = String(Math.floor(Math.random()*900)+100); const suffix = String(Math.floor(Math.random()*90000000)+10000000); return prefix + "-" + suffix; }
+
+/* --- Tracking Data Updater --- */
+function updateAllTrackingData(newAwb) {
+    
+    // 1. Update Invoice Number field
+    if ($('invoiceNo')) {
+        $('invoiceNo').value = newAwb;
+    }
+
+    // 2. Update all AWB displays
+    const trackingDisplay = newAwb || 'N/A';
+    
+    // Update displays
+    $('awbTrack').textContent = trackingDisplay;
+    $('awbNoLarge').textContent = trackingDisplay;
+    
+    // Update barcodes/QR codes
+    drawCode128OnCanvas(newAwb, 'invoiceBarcodeCanvas'); // Invoice barcode
+    drawCode128OnCanvas(newAwb, 'barcodePreview');
+    drawCode128OnCanvas(newAwb, 'barcodeCanvas2');
+    drawQRTo('qrcode', newAwb);
+    drawQRTo('awbQr', newAwb);
+
+    // Update AWB preview display
+    $('previewAwb').textContent = 'AWB: ' + trackingDisplay;
+}
+
+/* --- Invoice Item Management --- */
+function addItem(desc, qty, unit, cur){
+	const tbody = document.querySelector('#itemsTable tbody');
+	const tr = document.createElement('tr');
+    
+    // Store original unit and currency data (no conversion logic)
+    tr.dataset.qty = qty;
+    tr.dataset.unit = unit;
+    tr.dataset.cur = cur;
+    const total = (Number(qty)||0) * (Number(unit)||0);
+
+	tr.innerHTML = `<td>${escapeHtml(desc)}</td>
+		<td style="text-align:center">${escapeHtml(qty)}</td>
+		<td style="text-align:right">${fmt(unit)}</td>
+		<td style="text-align:center" class="item-currency-display">${escapeHtml(cur)}</td>
+		<td style="text-align:right" class="item-total-display">${fmt(total)}</td>
+		<td style="text-align:center"><button class="btn ghost" onclick="removeRow(this)">Del</button></td>`;
+	tbody.appendChild(tr);
+	recalcTotals();
+}
+
+function removeRow(btn){ btn.closest('tr').remove(); recalcTotals(); }
+
+// This function only recalculates total based on stored values and updates the displayed currency symbol.
+function recalcTotals(){
+	const rows = document.querySelectorAll('#itemsTable tbody tr');
+	let grandTotal = 0; 
+    let displayCurrency = $('itemCurrency').value || 'USD';
+    
+    // Update currency display on all rows
+    rows.forEach(r => {
+        const qty = Number(r.dataset.qty) || 0;
+        const unit = Number(r.dataset.unit) || 0;
+        const total = qty * unit;
+        
+        grandTotal += total; // Total calculation remains based on the stored numbers
+        
+        r.querySelector('.item-total-display').textContent = fmt(total); // Update total value displayed
+        r.querySelector('.item-currency-display').textContent = displayCurrency; // Update symbol only
+	});
+    
+	$('grandTotal').textContent = fmt(grandTotal);
+	$('totalCurrency').textContent = displayCurrency;
+}
+
+$('addItemBtn').addEventListener('click', ()=>{
+	const d = $('itemDesc').value.trim();
+	const q = $('itemQty').value || 1;
+	const u = $('itemUnit').value || 0;
+	const c = $('itemCurrency').value || 'USD';
+	if(!d || Number(u) <= 0){ alert('Enter item description and valid Unit Price.'); return; }
+	addItem(d,q,u,c);
+	$('itemDesc').value=''; $('itemQty').value='1'; $('itemUnit').value='0';
+});
+
+
+/* --- Barcode Drawing Logic (Code 128) --- */
+
+const CODE128_PATTERNS = [
+    "212222", "222122", "222221", "121223", "123122", "131222", "122213", "122312", "132212", "221213",
+    "221312", "231212", "112232", "122132", "122231", "113222", "123122", "123221", "223211", "221132",
+    "221231", "213212", "223112", "312131", "311222", "321122", "321221", "312212", "322112", "322211",
+    "212123", "212321", "232121", "114212", "124112", "124211", "241121", "241211", "242111", "112141",
+    "112241", "121142", "121241", "124121", "211241", "212141", "214121", "212213", "212312", "232112",
+    "311213", "311312", "312113", "312211", "321113", "321211", "331112", "331211", "341111", "112133",
+    "113123", "113321", "123113", "123311", "133112", "133211", "111233", "111332", "112331", "121323",
+    "122321", "131232", "132123", "132321", "211323", "213123", "213321", "231321", "232131", "312131",
+    "313121", "311142", "311241", "321141", "321241", "324111", "341121", "342111", "341211", "112124",
+    "112412", "121124", "121412", "122141", "124121", "124211", "211214", "211412", "212114", "214112",
+    "214211", "212212", "212312", "213212", "213311", "213411", "221213", "221312", "231212", "231311",
+    "233111", "241112", "241211", "242111", "141132", "141231", "142131", "143112", "143211", "112241" 
+];
+
+const CODE128_CHAR_MAP = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+
+function getCode128Pattern(codeValue) {
+    if (codeValue >= 0 && codeValue < CODE128_PATTERNS.length) {
+        return CODE128_PATTERNS[codeValue];
+    }
+    return null;
+}
+
+function getCode128CodeValue(char) {
+    const index = CODE128_CHAR_MAP.indexOf(char);
+    return index >= 0 ? index : -1;
+}
+
+function generateCode128PatternString(data) {
+    let codeValues = [104]; // Start Code B (104)
+    let patternString = getCode128Pattern(104);
+    let checksum = 104;
+
+    for (let i = 0; i < data.length; i++) {
+        const char = data[i];
+        const value = getCode128CodeValue(char);
+
+        if (value >= 0 && value <= 95) {
+            codeValues.push(value);
+            checksum += (value * (i + 1));
+            patternString += getCode128Pattern(value);
+        } else {
+            console.error(`Code 128: Character not supported: ${char}`);
+            return null;
+        }
+    }
+
+    const checksumCharValue = checksum % 103;
+    codeValues.push(checksumCharValue);
+    patternString += getCode128Pattern(checksumCharValue);
+    
+    patternString += getCode128Pattern(106); // Stop Pattern (106)
+    patternString += '2'; // Terminator Bar (2 units wide)
+    
+    return patternString;
+}
+
+function drawCode128OnCanvas(text, canvasId){
+	const canvas = document.getElementById(canvasId);
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+	if(!text) return;
+    
+    const patternString = generateCode128PatternString(text.replace(/-/g, ''));
+    if (!patternString) return;
+
+    let totalUnits = 0;
+    for (const width of patternString) {
+        totalUnits += parseInt(width);
+    }
+
+    const moduleWidth = Math.max(0.5, (canvas.width - 10) / totalUnits);
+    
+    let x = 5;
+    const barHeight = canvas.height - 10;
+    const barY = 5;
+
+    for (let i = 0; i < patternString.length; i++) {
+        const widthUnit = parseInt(patternString[i]);
+        const barWidth = widthUnit * moduleWidth;
+        
+        if (i % 2 === 0) { // Bar
+            ctx.fillRect(x, barY, barWidth, barHeight);
+        }
+        
+        x += barWidth;
+    }
+}
+
+function drawInvoiceBarcode(invoiceNo) {
+    if (invoiceNo) {
+        drawCode128OnCanvas(invoiceNo, 'invoiceBarcodeCanvas');
+    }
+}
+/* QR with QRious */
+function drawQRTo(elId, value){
+	const el = document.getElementById(elId);
+	el.innerHTML = '';
+	if(!value) return;
+	const qr = new QRious({ value: value, size: 120, level: 'M' });
+	const img = document.createElement('img'); img.src = qr.toDataURL(); img.alt='QR'; img.style.width='120px';
+	el.appendChild(img);
+}
+
+/* Export PDF one-click */
+async function exportPDF(){
+	const root = document.getElementById('sheetRoot');
+	const stc = document.querySelector('.stc-sheet');
+	const { jsPDF } = window.jspdf;
+	const pdf = new jsPDF('p','pt','a4');
+	const opt = { scale: 2, useCORS: true };
+	const pageWidth = pdf.internal.pageSize.getWidth();
+
+	// 1. AWB/Invoice Page
+	let canvas = await html2canvas(root, opt);
+	let imgData = canvas.toDataURL('image/png');
+	let pageHeight = (canvas.height * pageWidth) / canvas.width;
+	pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+
+	// 2. STC Page
+	pdf.addPage();
+	canvas = await html2canvas(stc, opt);
+	imgData = canvas.toDataURL('image/png');
+	pageHeight = (canvas.height * pageWidth) / canvas.width;
+	pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+
+	pdf.save(`UPX_Invoice_AWB_${$('invoiceNo').value}.pdf`);
+}
+
+/* Update previews for shipper/receiver and AWB details */
+function updatePreviewData(){
+	const sHTML = `${$('shipperName').value||''} ${$('shipperCompany').value?(' | ' + $('shipperCompany').value):''}\n${$('shipperAddress').value||''}\n${$('shipperContact').value||''}`;
+	const rHTML = `${$('recvName').value||''} ${$('recvCompany').value?(' | ' + $('recvCompany').value):''}\n${$('recvAddress').value||''}\n${$('recvContact').value||''}`;
+	
+	$('pShipper').textContent = sHTML.replace(/\n/g, ' / ');
+	$('pConsignee').textContent = rHTML.replace(/\n/g, ' / ');
+
+	$('awbShipper').innerHTML = sHTML.replaceAll('\n','<br>');
+	$('awbReceiver').innerHTML = rHTML.replaceAll('\n','<br>');
+
+	// Update Shipment details
+	$('awbBooking').textContent = $('bookingDate').value || new Date().toLocaleDateString();
+	$('awbDims').textContent = $('dims').value || '';
+	$('awbDimWeight').textContent = $('itemWeight').value || '';
+	$('awbChargeable').textContent = $('chargeable').value || '';
+	$('awbPieces').textContent = $('pieces').value || '';
+	$('awbWeight').textContent = $('itemWeight').value || '';
+	$('awbType').textContent = $('shipType').value || '';
+	
+	// AWB number placement (synced with Invoice No)
+	const awbnum = $('invoiceNo').value;
+    
+	$('awbNoLarge').textContent = awbnum;
+	$('awbTrack').textContent = awbnum; 
+	
+	// Update barcodes
+	drawCode128OnCanvas(awbnum, 'barcodePreview');
+	drawCode128OnCanvas(awbnum, 'barcodeCanvas2');
+	drawQRTo('qrcode', awbnum);
+	drawQRTo('awbQr', awbnum);
+}
+
+/* --- Tracking Data Updater --- */
+function updateAllTrackingData(newAwb) {
+    
+    // 1. Update Invoice Number field
+    if ($('invoiceNo')) {
+        $('invoiceNo').value = newAwb;
+    }
+
+    // 2. Update all AWB displays
+    const trackingDisplay = newAwb || 'N/A';
+    
+    // Update displays
+    $('awbTrack').textContent = trackingDisplay;
+    $('awbNoLarge').textContent = trackingDisplay;
+    
+    // Update barcodes/QR codes
+    drawCode128OnCanvas(newAwb, 'invoiceBarcodeCanvas'); // Invoice barcode
+    drawCode128OnCanvas(newAwb, 'barcodePreview');
+    drawCode128OnCanvas(newAwb, 'barcodeCanvas2');
+    drawQRTo('qrcode', newAwb);
+    drawQRTo('awbQr', newAwb);
+
+    // Update AWB preview display
+    $('previewAwb').textContent = 'AWB: ' + trackingDisplay;
+    
+    updatePreviewData(); // Sync other data fields dependent on tracking update
+}
+
+
+/* Wiring buttons */
+document.getElementById('genBarcodeBtn').addEventListener('click', ()=> {
+	const awb = $('invoiceNo').value;
+    updateAllTrackingData(awb); // Redraws all AWB/QR codes
+});
+
+document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+/* init on load */
+document.addEventListener('DOMContentLoaded', ()=>{
+	// set defaults
+	$('bookingDate').value = new Date().toISOString().slice(0,10);
+    
+    // Initial sync of Invoice No to all AWB fields on load
+    const initialAwb = $('invoiceNo').value;
+    updateAllTrackingData(initialAwb);
+
+	// live update listeners
+	['shipperName','shipperCompany','shipperAddress','shipperContact','recvName','recvCompany','recvAddress','recvContact','bookingDate','dims','itemWeight','chargeable','pieces','shipType'].forEach(id=>{
+		$(id).addEventListener('input', updatePreviewData);
+	});
+    // Key listener: Invoice No field updates everything
+    $('invoiceNo').addEventListener('input', () => updateAllTrackingData($('invoiceNo').value));
+});
+</script>
+</body>
+</html>
